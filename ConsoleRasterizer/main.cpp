@@ -1,6 +1,7 @@
 #include <iostream>
 #include <conio.h>
 #include <vector>
+#include <windows.h>
 
 // Utilities
 struct Vector3i {
@@ -54,45 +55,65 @@ std::vector<Vector3f> triangle = {
 	Vector3f{0, -2, 0}, // Top
 };
 
-Vector3f camera = {-5, -5, -1};
+std::vector<Vector3f> cube = {
+	Vector3f{2, -2, 0}, // Front top right
+	Vector3f{-2, -2, 0}, // Front top left
+	Vector3f{-2, 2, 0}, // Front bottom left
+	Vector3f{2, 2, 0}, // Front bottom right
+
+	Vector3f{2, -2, -0.05}, // Back top right
+	Vector3f{-2, -2, -0.05}, // Back top left
+	Vector3f{-2, 2, -0.05}, // Back bottom left
+	Vector3f{2, 2, -0.05}, // Back bottom right
+};
+
+Vector3f camera = {0, 0, -.5f};
 
 float lerp(float a, float b, float t) { return a + (b - a) * t; }
 
 void drawPoints(std::vector<Vector3f> points, Vector3f camera, bool erase = false) {
 	std::vector<Vector2i> drawnPoints;
+	
+	CONSOLE_SCREEN_BUFFER_INFO csbi;
+	HANDLE hStdout = GetStdHandle(STD_OUTPUT_HANDLE);
+	if (GetConsoleScreenBufferInfo(hStdout, &csbi)) {
+		Vector2i screenSize = Vector2i{ csbi.srWindow.Right - csbi.srWindow.Left + 1, csbi.srWindow.Bottom - csbi.srWindow.Top + 1 };
 
-	for (Vector3f point : points) {
 
-		Vector3f pointVal = Vector3f{point.x - camera.x, point.y - camera.y, point.z - camera.z};
+		for (Vector3f point : points) {
 
-		if (pointVal.z - camera.z == 0) continue;
+			Vector3f pointVal = Vector3f{ point.x - camera.x, point.y - camera.y, point.z - camera.z };
 
-		Vector2f screenVal = Vector2f{ pointVal.x / pointVal.z, pointVal.y / pointVal.z };
+			if (pointVal.z == 0) continue;
 
-		Console::cursorMove(Vector2i{ (int)screenVal.x, (int)screenVal.y });
-		Console::print(erase ? " " : "o");
+			Vector2f screenVal = Vector2f{ screenSize.x / 2 + pointVal.x / pointVal.z, screenSize.y / 2 + pointVal.y / pointVal.z };
 
-		drawnPoints.push_back(Vector2i{ (int)screenVal.x, (int)screenVal.y });
-	}
+			Console::cursorMove(Vector2i{ (int)screenVal.x, (int)screenVal.y });
+			Console::print(erase ? " " : "o");
 
-	for (int i = 0; i < drawnPoints.size(); i++) {
-		int index1 = i;
-		int index2 = i + 1;
-
-		if (index2 >= drawnPoints.size()) {
-			index2 = 0;
+			drawnPoints.push_back(Vector2i{ (int)screenVal.x, (int)screenVal.y });
 		}
 
-		for (float t = 0; t < 1; t += 0.1) {
-			Console::cursorMove(Vector2i{ (int)lerp(drawnPoints[index1].x, drawnPoints[index2].x, t) , (int)lerp(drawnPoints[index1].y, drawnPoints[index2].y, t) });
-			Console::print(erase ? " " : ".");
+		for (int i = 0; i < drawnPoints.size(); i++) {
+			int index1 = i;
+			int index2 = i + 1;
+
+			if (index2 >= drawnPoints.size()) {
+				index2 = 0;
+			}
+
+			for (float t = 0; t < 1; t += 0.1) {
+				Console::cursorMove(Vector2i{ (int)lerp(drawnPoints[index1].x, drawnPoints[index2].x, t), (int)lerp(drawnPoints[index1].y, drawnPoints[index2].y, t) });
+				Console::print(erase ? " " : ".");
+			}
 		}
 	}
 }
 
 int main() {
+
 	while (true) {
-		drawPoints(triangle, camera, true); // Erase
+		drawPoints(cube, camera, true); // Erase
 		
 
 		switch (Console::getChar()) {
@@ -104,7 +125,7 @@ int main() {
 		case 'c': camera.y+= 0.1f; break;
 		}
 
-		drawPoints(triangle, camera, false); // Draw
+		drawPoints(cube, camera, false); // Draw
 	}
 
 	Console::cursorMove({ 1, 20 });
