@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="ConsoleRasterizer/ConsoleRasterizer.vcxproj" />
+  <Project Path="ConsoleRasterizer/ConsoleRasterizer.vcxproj" Id="e18df6f7-83c4-4ca3-8422-8d512d257085" />
 </Solution>
